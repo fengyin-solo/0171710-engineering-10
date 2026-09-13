@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>投标报价计算器</title>
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#EEF2FF',
+                            100: '#E0E7FF',
+                            200: '#C7D2FE',
+                            300: '#A5B4FC',
+                            400: '#818CF8',
+                            500: '#6366F1',
+                            600: '#4F46E5',
+                            700: '#4338CA',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen bg-slate-50 font-sans safe-area-bottom" x-data="bidCalculator()">
+    <!-- 背景装饰 -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+    </div>
+
+    <div class="relative z-10">
+        <!-- 头部 -->
+        <header class="py-6 md:py-8 px-4">
+            <div class="max-w-7xl mx-auto text-center">
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 mb-1 md:mb-2">投标报价计算器</h1>
+                <p class="text-sm md:text-base text-slate-500">专业的投标报价模拟计算工具</p>
+            </div>
+        </header>
+
+        <!-- 主内容 -->
+        <main class="max-w-7xl mx-auto px-3 md:px-4 pb-8 md:pb-12">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+                
+                <!-- 左侧面板：配置区 -->
+                <div class="lg:col-span-4 space-y-4 md:space-y-6">
+                    
+                    <!-- 评标模式 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover">
+                        <div class="flex items-center gap-3 mb-4 md:mb-5">
+                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 md:w-5 md:h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-base md:text-lg font-semibold text-slate-800">评标模式</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 md:gap-3">
+                            <button @click="config.mode = 'single'"
+                                :class="config.mode === 'single' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                class="py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all duration-200 text-sm md:text-base">
+                                单低模式
+                            </button>
+                            <button @click="config.mode = 'double'"
+                                :class="config.mode === 'double' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                class="py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all duration-200 text-sm md:text-base">
+                                双低模式
+                            </button>
+                        </div>
+                        
+                        <div class="mt-3 md:mt-4 p-2.5 md:p-3 bg-slate-50 rounded-lg">
+                            <p class="text-xs md:text-sm text-slate-600" x-show="config.mode === 'single'">
+                                <strong>单低模式：</strong>基准价 = 最低有效报价
+                            </p>
+                            <p class="text-xs md:text-sm text-slate-600" x-show="config.mode === 'double'">
+                                <strong>双低模式：</strong>基准价 = 最低价×<span x-text="config.lowestWeight"></span>% + 平均价×<span x-text="100 - config.lowestWeight"></span>%
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 限价设置 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover">
+                        <div class="flex items-center gap-3 mb-4 md:mb-5">
+                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 md:w-5 md:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-base md:text-lg font-semibold text-slate-800">限价设置</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 md:gap-4">
+                            <div>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">上限价<span class="hidden sm:inline">（万元）</span></label>
+                                <input type="number" x-model.number="config.maxPrice" 
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base"
+                                    placeholder="不限制">
+                            </div>
+                            <div>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">下限价<span class="hidden sm:inline">（万元）</span></label>
+                                <input type="number" x-model.number="config.minPrice" 
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base"
+                                    placeholder="不限制">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 评分规则 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover">
+                        <div class="flex items-center gap-3 mb-4 md:mb-5">
+                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 md:w-5 md:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-base md:text-lg font-semibold text-slate-800">评分规则</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 md:gap-4">
+                            <div>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">满分</label>
+                                <input type="number" x-model.number="config.fullScore" 
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base">
+                            </div>
+                            <div>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">最低分</label>
+                                <input type="number" x-model.number="config.minScore" 
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base">
+                            </div>
+                            <div>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">上浮扣分<span class="hidden sm:inline">/1%</span></label>
+                                <input type="number" x-model.number="config.deductUp" step="0.1"
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base">
+                            </div>
+                            <div>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">下浮扣分<span class="hidden sm:inline">/1%</span></label>
+                                <input type="number" x-model.number="config.deductDown" step="0.1"
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base">
+                            </div>
+                            <div class="col-span-2" x-show="config.mode === 'double'" x-transition>
+                                <label class="block text-xs md:text-sm font-medium text-slate-600 mb-1.5 md:mb-2">最低价权重 (%)</label>
+                                <input type="number" x-model.number="config.lowestWeight" min="0" max="100"
+                                    class="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base">
+                                <p class="mt-1 text-xs text-slate-400">平均价权重: <span x-text="100 - config.lowestWeight"></span>%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 计算公式（仅桌面端显示） -->
+                    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-lg font-semibold text-slate-800">计算公式</h2>
+                        </div>
+                        <div class="space-y-3 text-sm text-slate-600 bg-slate-50 rounded-lg p-4">
+                            <p><strong>偏离率</strong> = (报价 - 基准价) / 基准价 × 100%</p>
+                            <p><strong>得分</strong> = <span x-text="config.fullScore"></span> - |偏离率| × 扣分系数</p>
+                            <p class="text-slate-500 text-xs pt-2 border-t border-slate-200">
+                                · 报价 &gt; 基准价：扣分系数 = <span x-text="config.deductUp"></span><br>
+                                · 报价 &lt; 基准价：扣分系数 = <span x-text="config.deductDown"></span><br>
+                                · 最终得分不低于 <span x-text="config.minScore"></span> 分
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧面板：报价与结果、方案对比 -->
+                <div class="lg:col-span-8 space-y-4 md:space-y-6">
+
+                    <!-- 方案管理 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover">
+                        <div class="flex items-center gap-3 mb-4 md:mb-5">
+                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 md:w-5 md:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h2 class="text-base md:text-lg font-semibold text-slate-800">方案管理</h2>
+                                <p class="text-xs md:text-sm text-slate-500">保存多套方案进行对比分析</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                    </svg>
+                                    导入
+                                    <input type="file" accept=".json" @change="importScenarios" class="hidden">
+                                </label>
+                                <button @click="exportScenarios()" x-show="scenarios.length > 0"
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    导出
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 保存方案 -->
+                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                            <input type="text" x-model="newScenarioName" @keyup.enter="saveScenario()"
+                                class="flex-1 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm md:text-base"
+                                placeholder="输入方案名称...">
+                            <button @click="saveScenario()" :disabled="bids.length === 0"
+                                :class="bids.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-600'"
+                                class="px-4 md:px-6 py-2 md:py-2.5 bg-indigo-500 text-white rounded-lg font-medium transition-all text-sm md:text-base">
+                                保存方案
+                            </button>
+                            <button @click="updateScenario()" x-show="currentScenarioId"
+                                class="px-4 md:px-6 py-2 md:py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-all text-sm md:text-base">
+                                更新方案
+                            </button>
+                        </div>
+
+                        <!-- 方案列表 -->
+                        <div x-show="scenarios.length > 0" class="space-y-2">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs md:text-sm text-slate-500">已保存方案 (<span x-text="scenarios.length"></span>)</span>
+                                <span class="text-xs text-slate-400">选择2-4个方案进行对比</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                <template x-for="scenario in scenarios" :key="scenario.id">
+                                    <div :class="currentScenarioId === scenario.id ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'"
+                                        class="relative p-3 border rounded-lg transition-all">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex-1 min-w-0 cursor-pointer" @click="loadScenario(scenario.id)">
+                                                <p class="font-medium text-slate-800 text-sm truncate" x-text="scenario.name"></p>
+                                                <p class="text-xs text-slate-400">
+                                                    <span x-text="scenario.bids.length"></span> 家单位 · 
+                                                    <span x-text="scenario.config.mode === 'single' ? '单低' : '双低'"></span>
+                                                </p>
+                                            </div>
+                                            <div class="flex items-center gap-1 flex-shrink-0">
+                                                <label class="flex items-center cursor-pointer p-1 hover:bg-white rounded transition-all">
+                                                    <input type="checkbox" 
+                                                        :checked="compareScenarioIds.includes(scenario.id)"
+                                                        @change="toggleCompareScenario(scenario.id)"
+                                                        class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                                </label>
+                                                <button @click="deleteScenario(scenario.id)" 
+                                                    class="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- 对比标记 -->
+                                        <div x-show="compareScenarioIds.includes(scenario.id)"
+                                            class="absolute -top-1 -right-1 w-5 h-5 bg-indigo-500 text-white text-xs rounded-full flex items-center justify-center font-medium"
+                                            x-text="compareScenarioIds.indexOf(scenario.id) + 1"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- 空状态 -->
+                        <div x-show="scenarios.length === 0" class="text-center py-4 text-slate-400">
+                            <svg class="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p class="text-sm">暂无保存的方案</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 投标报价 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover">
+                        <div class="flex items-center justify-between mb-4 md:mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 md:w-5 md:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <h2 class="text-base md:text-lg font-semibold text-slate-800">投标报价</h2>
+                            </div>
+                            <span class="text-xs md:text-sm text-slate-500">共 <span class="font-semibold text-primary-600" x-text="bids.length"></span> 家</span>
+                        </div>
+
+                        <!-- 移动端输入 -->
+                        <div class="space-y-2 md:hidden mb-4">
+                            <input type="text" x-model="newBid.name" 
+                                class="w-full px-3 py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm"
+                                placeholder="投标单位名称">
+                            <div class="flex gap-2">
+                                <input type="number" x-model.number="newBid.price" 
+                                    class="flex-1 px-3 py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all text-sm"
+                                    placeholder="报价（万元）">
+                                <button @click="addBid()" 
+                                    class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all shadow-lg shadow-primary-500/30 text-sm">
+                                    添加
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 桌面端输入 -->
+                        <div class="hidden md:flex gap-3 mb-4">
+                            <input type="text" x-model="newBid.name" @keyup.enter="addBid()"
+                                class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all"
+                                placeholder="投标单位名称">
+                            <input type="number" x-model.number="newBid.price" @keyup.enter="addBid()"
+                                class="w-36 px-4 py-2.5 rounded-lg border border-slate-200 focus:border-primary-500 focus:outline-none input-focus transition-all"
+                                placeholder="报价（万元）">
+                            <button @click="addBid()" 
+                                class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40">
+                                添加
+                            </button>
+                        </div>
+
+                        <!-- 报价列表 -->
+                        <div class="space-y-2 max-h-48 md:max-h-64 overflow-y-auto" x-show="bids.length > 0">
+                            <template x-for="(bid, index) in bids" :key="bid.id">
+                                <div class="flex items-center justify-between p-2.5 md:p-3 bg-slate-50 rounded-lg group hover:bg-slate-100 transition-all slide-in">
+                                    <div class="flex items-center gap-2 md:gap-3 min-w-0">
+                                        <span class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-200 text-slate-600 text-xs flex items-center justify-center font-medium flex-shrink-0" x-text="index + 1"></span>
+                                        <span class="font-medium text-slate-700 text-sm md:text-base truncate" x-text="bid.name"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                                        <span class="text-slate-600 font-semibold text-sm md:text-base" x-text="bid.price.toFixed(2) + '万'"></span>
+                                        <button @click="removeBid(bid.id)" 
+                                            class="mobile-visible opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- 空状态 -->
+                        <div x-show="bids.length === 0" class="text-center py-6 md:py-8 text-slate-400">
+                            <svg class="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <p class="text-sm md:text-base">暂无报价，请添加投标单位</p>
+                        </div>
+
+                        <div class="flex justify-end mt-3 md:mt-4" x-show="bids.length > 0">
+                            <button @click="clearBids()" 
+                                class="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                清空所有
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 计算结果 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover" x-show="bids.length > 0 && !compareMode" x-transition>
+                        <div class="flex items-center gap-3 mb-4 md:mb-5">
+                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 md:w-5 md:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-base md:text-lg font-semibold text-slate-800">计算结果</h2>
+                        </div>
+
+                        <!-- 基准价信息 -->
+                        <div class="bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl p-3 md:p-5 mb-4 md:mb-6">
+                            <div class="grid grid-cols-3 gap-2 md:gap-4" :class="config.mode === 'double' ? 'sm:grid-cols-4' : ''">
+                                <div class="text-center">
+                                    <p class="text-xs md:text-sm text-slate-500 mb-0.5 md:mb-1">有效数</p>
+                                    <p class="text-lg md:text-2xl font-bold text-slate-800" x-text="validBidsCount"></p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-xs md:text-sm text-slate-500 mb-0.5 md:mb-1">最低价</p>
+                                    <p class="text-lg md:text-2xl font-bold text-emerald-600" x-text="lowestValidPrice ? lowestValidPrice.toFixed(1) : '-'"></p>
+                                </div>
+                                <div class="text-center" x-show="config.mode === 'double'">
+                                    <p class="text-xs md:text-sm text-slate-500 mb-0.5 md:mb-1">平均价</p>
+                                    <p class="text-lg md:text-2xl font-bold text-blue-600" x-text="averageValidPrice ? averageValidPrice.toFixed(1) : '-'"></p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-xs md:text-sm text-slate-500 mb-0.5 md:mb-1">基准价</p>
+                                    <p class="text-lg md:text-2xl font-bold text-primary-600" x-text="baselinePrice ? baselinePrice.toFixed(2) : '-'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 得分排名 -->
+                        <div class="space-y-2 md:space-y-3">
+                            <template x-for="(result, index) in sortedResults" :key="result.id">
+                                <div :class="result.isValid ? 'border-slate-200' : 'border-red-200 bg-red-50/50'"
+                                    class="flex items-center justify-between p-3 md:p-4 border rounded-xl transition-all">
+                                    <div class="flex items-center gap-2 md:gap-4 min-w-0">
+                                        <!-- 排名徽章 -->
+                                        <div x-show="result.isValid && result.rank <= 3"
+                                            :class="{'rank-1': result.rank === 1, 'rank-2': result.rank === 2, 'rank-3': result.rank === 3}"
+                                            class="w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-sm shadow-lg flex-shrink-0">
+                                            <span x-text="result.rank"></span>
+                                        </div>
+                                        <div x-show="!result.isValid || result.rank > 3"
+                                            class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-medium text-xs md:text-sm flex-shrink-0">
+                                            <span x-text="result.rank || '-'"></span>
+                                        </div>
+                                        
+                                        <div class="min-w-0">
+                                            <p class="font-semibold text-slate-800 text-sm md:text-base truncate" x-text="result.name"></p>
+                                            <!-- 移动端简化信息 -->
+                                            <p class="text-xs text-slate-500 md:hidden">
+                                                <span class="font-medium" x-text="result.price.toFixed(1)"></span>万
+                                                <span x-show="result.isValid">
+                                                    · <span :class="result.deviation >= 0 ? 'text-amber-600' : 'text-emerald-600'" 
+                                                        x-text="(result.deviation >= 0 ? '+' : '') + result.deviation.toFixed(1) + '%'"></span>
+                                                </span>
+                                            </p>
+                                            <!-- 桌面端完整信息 -->
+                                            <p class="hidden md:block text-sm text-slate-500">
+                                                报价: <span class="font-medium" x-text="result.price.toFixed(2)"></span> 万元
+                                                <span x-show="result.isValid" class="ml-2">
+                                                    · 偏离: <span :class="result.deviation >= 0 ? 'text-amber-600' : 'text-emerald-600'" 
+                                                        x-text="(result.deviation >= 0 ? '+' : '') + result.deviation.toFixed(2) + '%'"></span>
+                                                    · 扣分: <span class="text-red-500" x-text="result.deduction.toFixed(1)"></span>
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                                        <!-- 状态徽章 -->
+                                        <span x-show="result.isValid" 
+                                            class="hidden sm:inline-block px-2 md:px-3 py-1 rounded-full text-xs font-medium valid-badge text-white">
+                                            有效
+                                        </span>
+                                        <span x-show="!result.isValid" 
+                                            class="px-2 md:px-3 py-1 rounded-full text-xs font-medium invalid-badge text-white whitespace-nowrap">
+                                            <span x-text="result.invalidReason"></span>
+                                        </span>
+                                        
+                                        <!-- 得分 -->
+                                        <div x-show="result.isValid" class="text-right min-w-[45px] md:min-w-[60px]">
+                                            <p class="text-xl md:text-2xl font-bold text-primary-600 animate-number" x-text="result.score.toFixed(1)"></p>
+                                            <p class="text-xs text-slate-400 hidden md:block">得分</p>
+                                        </div>
+                                        <div x-show="!result.isValid" class="text-right min-w-[45px] md:min-w-[60px]">
+                                            <p class="text-xl md:text-2xl font-bold text-slate-300">--</p>
+                                            <p class="text-xs text-slate-400 hidden md:block">废标</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- 方案对比结果 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 card-hover" x-show="compareMode" x-transition>
+                        <div class="flex items-center justify-between mb-4 md:mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 md:w-5 md:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 class="text-base md:text-lg font-semibold text-slate-800">方案对比</h2>
+                                    <p class="text-xs md:text-sm text-slate-500">对比 <span x-text="compareResults.length"></span> 个方案的基准价、排名和差异</p>
+                                </div>
+                            </div>
+                            <button @click="compareMode = false; compareScenarioIds = []"
+                                class="px-3 py-1.5 text-xs md:text-sm text-slate-500 hover:bg-slate-100 rounded-lg transition-all">
+                                退出对比
+                            </button>
+                        </div>
+
+                        <!-- 基准价对比 -->
+                        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-3 md:p-5 mb-4 md:mb-6">
+                            <div class="overflow-x-auto">
+                                <div class="flex gap-4 md:gap-6 min-w-max">
+                                    <template x-for="result in compareResults" :key="result.scenarioId">
+                                        <div class="text-center px-4 py-2 bg-white/80 rounded-lg">
+                                            <p class="text-xs md:text-sm text-slate-500 mb-1 truncate max-w-[120px]" x-text="result.scenarioName"></p>
+                                            <div class="flex items-center justify-center gap-1 mb-1">
+                                                <span class="text-xs px-2 py-0.5 rounded-full"
+                                                    :class="result.config.mode === 'single' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'"
+                                                    x-text="result.config.mode === 'single' ? '单低' : '双低'"></span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                                <div>
+                                                    <span class="text-slate-400">基准价</span>
+                                                    <p class="font-bold text-primary-600" x-text="result.baselinePrice ? result.baselinePrice.toFixed(2) : '-'"></p>
+                                                </div>
+                                                <div>
+                                                    <span class="text-slate-400">有效数</span>
+                                                    <p class="font-bold text-slate-700" x-text="result.validBidsCount"></p>
+                                                </div>
+                                                <div>
+                                                    <span class="text-slate-400">最低价</span>
+                                                    <p class="font-bold text-emerald-600" x-text="result.lowestValidPrice ? result.lowestValidPrice.toFixed(1) : '-'"></p>
+                                                </div>
+                                                <div x-show="result.config.mode === 'double'">
+                                                    <span class="text-slate-400">平均价</span>
+                                                    <p class="font-bold text-blue-600" x-text="result.averageValidPrice ? result.averageValidPrice.toFixed(1) : '-'"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 排名对比表 -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200">
+                                        <th class="text-left py-3 px-2 font-semibold text-slate-600 sticky left-0 bg-white z-10">投标单位</th>
+                                        <template x-for="result in compareResults" :key="result.scenarioId">
+                                            <th class="text-center py-3 px-2 font-semibold text-slate-600 min-w-[120px]">
+                                                <span class="block truncate" x-text="result.scenarioName"></span>
+                                            </th>
+                                        </template>
+                                        <th class="text-center py-3 px-2 font-semibold text-slate-600 min-w-[100px]">差异分析</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="bidderName in allBidderNames" :key="bidderName">
+                                        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                            <td class="py-3 px-2 font-medium text-slate-800 sticky left-0 bg-white z-10" x-text="bidderName"></td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-3 px-2 text-center">
+                                                    <template x-if="getBidderData(bidderName, result)">
+                                                        <div>
+                                                            <div class="flex items-center justify-center gap-1 mb-1">
+                                                                <!-- 排名 -->
+                                                                <span x-show="getBidderData(bidderName, result).isValid && getBidderData(bidderName, result).rank <= 3"
+                                                                    :class="{'rank-1': getBidderData(bidderName, result).rank === 1, 'rank-2': getBidderData(bidderName, result).rank === 2, 'rank-3': getBidderData(bidderName, result).rank === 3}"
+                                                                    class="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                                                    <span x-text="getBidderData(bidderName, result).rank"></span>
+                                                                </span>
+                                                                <span x-show="!getBidderData(bidderName, result).isValid || getBidderData(bidderName, result).rank > 3"
+                                                                    class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-medium text-xs">
+                                                                    <span x-text="getBidderData(bidderName, result).rank || '-'"></span>
+                                                                </span>
+                                                            </div>
+                                                            <p class="text-xs text-slate-600" x-text="getBidderData(bidderName, result).price.toFixed(1) + '万'"></p>
+                                                            <template x-if="getBidderData(bidderName, result).isValid">
+                                                                <p class="text-xs font-medium"
+                                                                    :class="getBidderData(bidderName, result).score >= result.config.fullScore * 0.8 ? 'text-emerald-600' : getBidderData(bidderName, result).score >= result.config.fullScore * 0.6 ? 'text-amber-600' : 'text-red-500'"
+                                                                    x-text="getBidderData(bidderName, result).score.toFixed(1) + '分'"></p>
+                                                            </template>
+                                                            <template x-if="!getBidderData(bidderName, result).isValid">
+                                                                <p class="text-xs text-red-500 font-medium" x-text="getBidderData(bidderName, result).invalidReason"></p>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!getBidderData(bidderName, result)">
+                                                        <span class="text-slate-300">--</span>
+                                                    </template>
+                                                </td>
+                                            </template>
+                                            <!-- 差异分析 -->
+                                            <td class="py-3 px-2 text-center">
+                                                <template x-if="compareResults.length >= 2">
+                                                    <div class="text-xs">
+                                                        <template x-if="getBidderData(bidderName, compareResults[0]) && getBidderData(bidderName, compareResults[1])">
+                                                            <div>
+                                                                <template x-if="getBidderData(bidderName, compareResults[0]).isValid && getBidderData(bidderName, compareResults[1]).isValid">
+                                                                    <div>
+                                                                        <p class="text-slate-500">排名变化</p>
+                                                                        <p :class="(getBidderData(bidderName, compareResults[0]).rank - getBidderData(bidderName, compareResults[1]).rank) > 0 ? 'text-emerald-600' : (getBidderData(bidderName, compareResults[0]).rank - getBidderData(bidderName, compareResults[1]).rank) < 0 ? 'text-red-500' : 'text-slate-400'"
+                                                                            class="font-semibold">
+                                                                            <span x-text="(getBidderData(bidderName, compareResults[0]).rank - getBidderData(bidderName, compareResults[1]).rank) > 0 ? '↑' : (getBidderData(bidderName, compareResults[0]).rank - getBidderData(bidderName, compareResults[1]).rank) < 0 ? '↓' : '—'"></span>
+                                                                            <span x-text="Math.abs(getBidderData(bidderName, compareResults[0]).rank - getBidderData(bidderName, compareResults[1]).rank) || ''"></span>
+                                                                        </p>
+                                                                        <p class="text-slate-400 mt-1">分差</p>
+                                                                        <p :class="(getBidderData(bidderName, compareResults[0]).score - getBidderData(bidderName, compareResults[1]).score) > 0 ? 'text-emerald-600' : (getBidderData(bidderName, compareResults[0]).score - getBidderData(bidderName, compareResults[1]).score) < 0 ? 'text-red-500' : 'text-slate-400'"
+                                                                            class="font-semibold">
+                                                                            <span x-text="(getBidderData(bidderName, compareResults[0]).score - getBidderData(bidderName, compareResults[1]).score) > 0 ? '+' : ''"></span>
+                                                                            <span x-text="(getBidderData(bidderName, compareResults[0]).score - getBidderData(bidderName, compareResults[1]).score).toFixed(1)"></span>
+                                                                        </p>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 方案配置对比 -->
+                        <div class="mt-6 pt-4 border-t border-slate-200">
+                            <h3 class="text-sm font-semibold text-slate-700 mb-3">配置参数对比</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="border-b border-slate-200">
+                                            <th class="text-left py-2 px-2 font-medium text-slate-500 sticky left-0 bg-white z-10">参数</th>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <th class="text-center py-2 px-2 font-medium text-slate-500" x-text="result.scenarioName"></th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b border-slate-100">
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">评标模式</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center">
+                                                    <span class="text-xs px-2 py-1 rounded-full"
+                                                        :class="result.config.mode === 'single' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'"
+                                                        x-text="result.config.mode === 'single' ? '单低模式' : '双低模式'"></span>
+                                                </td>
+                                            </template>
+                                        </tr>
+                                        <tr class="border-b border-slate-100">
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">价格满分</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center text-slate-800" x-text="result.config.fullScore"></td>
+                                            </template>
+                                        </tr>
+                                        <tr class="border-b border-slate-100">
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">上浮扣分/1%</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center text-amber-600" x-text="result.config.deductUp"></td>
+                                            </template>
+                                        </tr>
+                                        <tr class="border-b border-slate-100">
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">下浮扣分/1%</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center text-emerald-600" x-text="result.config.deductDown"></td>
+                                            </template>
+                                        </tr>
+                                        <tr class="border-b border-slate-100" x-show="compareResults.some(r => r.config.mode === 'double')">
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">最低价权重</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center">
+                                                    <span x-show="result.config.mode === 'double'" x-text="result.config.lowestWeight + '%'"></span>
+                                                    <span x-show="result.config.mode !== 'double'" class="text-slate-300">-</span>
+                                                </td>
+                                            </template>
+                                        </tr>
+                                        <tr class="border-b border-slate-100">
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">上限价</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center">
+                                                    <span x-show="result.config.maxPrice" x-text="result.config.maxPrice + '万'"></span>
+                                                    <span x-show="!result.config.maxPrice" class="text-slate-300">不限制</span>
+                                                </td>
+                                            </template>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-2 text-slate-600 sticky left-0 bg-white z-10">下限价</td>
+                                            <template x-for="result in compareResults" :key="result.scenarioId">
+                                                <td class="py-2 px-2 text-center">
+                                                    <span x-show="result.config.minPrice" x-text="result.config.minPrice + '万'"></span>
+                                                    <span x-show="!result.config.minPrice" class="text-slate-300">不限制</span>
+                                                </td>
+                                            </template>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="py-4 md:py-6 text-center text-slate-400 text-xs md:text-sm">
+            <p>投标报价计算器 · 仅供模拟测试使用</p>
+        </footer>
+    </div>
+
+    <!-- 业务逻辑 -->
+    <script src="js/app.js"></script>
+</body>
+</html>
