@@ -2,7 +2,7 @@
 
 ## 硬性门槛说明
 
-本项目通过执行 docker compose up --build -d 命令完成构建与启动，服务成功运行在 localhost:8081 端口，经过 curl 验证返回 HTTP 状态码 200，表明服务正常可达。容器名称为 bid-calculator-frontend，状态显示为 Up 且健康检查通过，完全满足 Docker 交付标准中关于通过 localhost 暴露可访问服务的核心要求。
+本项目通过执行 docker compose up --build -d 命令完成构建与启动，服务成功运行在 localhost:8082 端口，经过 curl 验证返回 HTTP 状态码 200，表明服务正常可达。容器名称为 bid-calculator-frontend，状态显示为 Up 且健康检查通过（/healthz），完全满足 Docker 交付标准中关于通过 localhost 暴露可访问服务的核心要求。
 
 ## 交付完整性说明
 

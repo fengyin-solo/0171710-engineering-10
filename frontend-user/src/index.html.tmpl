@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="app-version" content="@@APP_VERSION@@">
+    <meta name="build-time" content="@@BUILD_TIME@@">
     <title>投标报价计算器</title>
-    
-    <!-- TailwindCSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- TailwindCSS（构建期拉取并锁定版本，本地/容器均走同源 /assets） -->
+    <script src="/assets/js/tailwind.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -30,17 +32,16 @@
             }
         }
     </script>
-    
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
+    <!-- Alpine.js（本地锁定版本） -->
+    <script defer src="/assets/js/alpine.min.js"></script>
+
+    <!-- Inter 字体（构建期内置 latin 子集，无运行时外网依赖） -->
+    <link rel="preload" href="/assets/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/fonts/inter.css">
+
     <!-- 自定义样式 -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="min-h-screen bg-slate-50 font-sans safe-area-bottom" x-data="bidCalculator()">
     <!-- 背景装饰 -->
@@ -688,10 +689,13 @@
         <!-- 页脚 -->
         <footer class="py-4 md:py-6 text-center text-slate-400 text-xs md:text-sm">
             <p>投标报价计算器 · 仅供模拟测试使用</p>
+            <p class="mt-1 text-[11px] text-slate-300">
+                版本 @@APP_VERSION@@ · 构建于 @@BUILD_TIME@@
+            </p>
         </footer>
     </div>
 
     <!-- 业务逻辑 -->
-    <script src="js/app.js"></script>
+    <script src="/assets/js/app.js"></script>
 </body>
 </html>

@@ -45,7 +45,10 @@ out/
 .output/
 .cache/
 
-# 环境变量
+# 本项目依赖下载缓存（内容寻址，可由 lock 重建）
+vendor/.cache/
+
+# 本地环境变量（保留 .env.example）
 .env
 .env.local
 .env.development.local

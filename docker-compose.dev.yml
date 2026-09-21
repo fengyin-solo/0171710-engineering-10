@@ -1,0 +1,11 @@
+# 本地开发覆盖配置：
+#   1) 先执行 make build-local（生成 frontend-user/dist）
+#   2) docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# 与正式容器使用同一个镜像、同一份 nginx 配置、同一个 8082 端口；
+# 区别只是把本机构建产物 dist/ 只读挂载到容器 web 根 /app，
+# 修改源码后重新执行 make build-local 再刷新浏览器即可。
+services:
+  frontend-user:
+    volumes:
+      - ./frontend-user/dist:/app:ro

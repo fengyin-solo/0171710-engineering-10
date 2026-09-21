@@ -1,14 +1,26 @@
 services:
   frontend-user:
     build:
-      context: ./frontend-user
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend-user/Dockerfile
+      args:
+        # 构建参数：优先从 .env / 环境变量读取；默认 dev 仅用于本地开发，
+        # 正式发布请显式传入（make build / make image），避免打出 dev 镜像。
+        APP_VERSION: ${APP_VERSION:-dev}
+        BUILD_TIME: ${BUILD_TIME:-1970-01-01T00:00:00Z}
+    image: bid-calculator-frontend:${APP_VERSION:-dev}
     container_name: bid-calculator-frontend
     ports:
       - "8082:80"
     restart: unless-stopped
+    # 只读根文件系统 + tmpfs：容器重启无状态残留，行为完全一致
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3

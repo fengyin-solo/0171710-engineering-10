@@ -1,0 +1,13 @@
+# 构建产物与依赖缓存不进构建上下文（Dockerfile 内自行生成，保证可重复）
+**/dist/
+**/vendor/.cache/
+
+# 本地开发覆盖配置不需要进入镜像
+docker-compose*.yml
+.dockerignore
+
+# 杂项
+.git/
+**/*.tmp
+**/*.bak
+**/.DS_Store
