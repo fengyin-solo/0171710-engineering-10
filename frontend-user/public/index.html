@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>投标报价计算器</title>
     
-    <!-- TailwindCSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TailwindCSS（构建期固化到本地 vendor，无运行时外网依赖） -->
+    <script src="vendor/tailwindcss/3.4.17/tailwind.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -31,14 +31,9 @@
         }
     </script>
     
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <!-- Alpine.js（构建期固化到本地 vendor，无运行时外网依赖） -->
+    <script defer src="vendor/alpinejs/3.14.1/alpine.min.js"></script>
+
     <!-- 自定义样式 -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -688,6 +683,7 @@
         <!-- 页脚 -->
         <footer class="py-4 md:py-6 text-center text-slate-400 text-xs md:text-sm">
             <p>投标报价计算器 · 仅供模拟测试使用</p>
+            <p class="mt-1 font-mono text-[11px] text-slate-300">版本 <span id="app-version">@APP_VERSION@</span> · 构建于 <span id="app-build-time">@APP_BUILD_TIME@</span></p>
         </footer>
     </div>
 

@@ -1,14 +1,36 @@
+# 生产/交付配置：本机与 CI 统一通过根目录 Makefile 目标调用，
+# 以保证 VERSION / BUILD_TIME 缺失时立即报错停止（见 Makefile）。
+#
+#   make up      构建并启动（http://localhost:8082）
+#   make down    停止
+#
+# 若直接执行 docker compose 而未提供变量，下面的强制插值会立即失败并给出提示，
+# 避免意外构建出无版本信息的镜像。
+
 services:
   frontend-user:
     build:
       context: ./frontend-user
       dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:?必须通过 make 或环境变量提供 VERSION，例如: make up VERSION=1.0.0}
+        BUILD_TIME: ${BUILD_TIME:?必须通过 make 或环境变量提供 BUILD_TIME（make 目标会自动生成 UTC 时间）}
+        REVISION: ${REVISION:-unknown}
+    image: bid-calculator-frontend:${VERSION:?必须提供 VERSION，例如: make up VERSION=1.0.0}
     container_name: bid-calculator-frontend
+    # 端口映射在生产与本地开发中保持一致：8082 -> 容器内 80
     ports:
       - "8082:80"
+    # 容器重启后行为一致：镜像本身不可变，无状态卷，可写目录全部使用 tmpfs
+    # （/run 放 pid，/tmp/nginx 放各 *_temp_path，/var/cache/nginx 为缓存目录）
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+      - /run:size=1m
+      - /var/cache/nginx:size=16m
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3

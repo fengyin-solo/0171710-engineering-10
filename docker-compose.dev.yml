@@ -1,0 +1,21 @@
+# 本机开发 override（与生产共用 docker-compose.yml，仅把构建产物与配置改为 bind mount）。
+#
+#   make dev-build   用同一套 scripts/build.sh 在本机产出 dist/
+#   make dev         启动与生产同版本的 nginx，容器内目录结构与生产一致
+#
+# 页面行为与容器一致：同一个 nginx 镜像、同一份 nginx.conf、同一份 dist 布局、
+# 同样的 8082 端口与 /healthz。修改 public/ 后重新 make dev-build 并刷新页面即可。
+
+services:
+  frontend-user:
+    build:
+      args:
+        VERSION: ${VERSION:-dev}
+        BUILD_TIME: ${BUILD_TIME:-dev}
+        REVISION: ${REVISION:-local}
+    image: bid-calculator-frontend:dev
+    volumes:
+      # 只读挂载本机构建产物与 nginx 配置，容器内路径与生产完全相同
+      - ./frontend-user/dist:/usr/share/nginx/html:ro
+      - ./frontend-user/docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend-user/docker/nginx-includes/security-headers.conf:/etc/nginx/security-headers.conf:ro

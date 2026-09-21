@@ -1,0 +1,8 @@
+# 前端第三方依赖清单
+#
+# 构建期由 scripts/fetch-deps.sh 下载并校验 SHA256 后固化到 dist/vendor/，
+# 页面运行时不再依赖外网 CDN。修改版本时必须同步更新 sha256。
+#
+# 字段（以空白分隔）：相对产物目录的路径  SHA256  下载URL
+vendor/tailwindcss/3.4.17/tailwind.min.js  176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15  https://cdn.tailwindcss.com/3.4.17
+vendor/alpinejs/3.14.1/alpine.min.js     358d9afbb1ab5befa2f48061a30776e5bcd7707f410a606ba985f98bc3b1c034  https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js

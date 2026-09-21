@@ -1,0 +1,9 @@
+# 构建上下文只保留构建所需内容；dist/ 在镜像内由 build.sh 重新生成，
+# 本地 dist 绝不进入镜像（静态文件以 public/ 为唯一来源）。
+dist/
+.cache/
+*.log
+*.md
+.git/
+.gitignore
+.DS_Store
